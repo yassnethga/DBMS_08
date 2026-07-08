@@ -53,7 +53,7 @@ docker compose version
 
 > **Screenshot 1:** Take a screenshot showing both version outputs.
 >
-> `[insert screenshot]`
+> <img width="308" height="84" alt="1" src="https://github.com/user-attachments/assets/b28e07eb-2e54-485e-a9ce-e9d8b65b3f16" />
 
 ---
 
@@ -78,7 +78,7 @@ docker images
 > **Screenshot 2:** Take a screenshot showing `docker ps -a` and
 > `docker images` output.
 >
-> `[insert screenshot]`
+> <img width="889" height="428" alt="2" src="https://github.com/user-attachments/assets/7d233bc9-62cf-4006-ae5f-f296da642ca8" />
 
 ### Step 2 – Run an nginx Webserver
 
@@ -108,14 +108,15 @@ docker system df
 **Question 1.1:** The flag `-d` starts the container in detached mode.
 What happens without `-d`, and why is detached mode useful for a web server?
 
-> *Your answer:*
+> Ohne -d läuft der Container im Vordergrund und blockiert das Terminal. Detached Mode ist nützlich, weil der Webserver im Hintergrund weiterläuft.
+
 
 **Question 1.2:** `-p 8080:80` maps host port 8080 to container port 80.
 Which port is the application actually listening on inside the container?
 What would `-p 9000:80` change?
 
-> *Your answer:*
-
+> Die Anwendung hört im Container auf Port 80.
+-p 9000:80 würde den Webserver über Port 9000 auf dem Host erreichbar machen.
 ---
 
 ## 2 – Writing a Dockerfile
@@ -160,7 +161,7 @@ exit
 > **Screenshot 3:** Take a screenshot showing the `docker build` output and
 > the commands run inside the container.
 >
-> `[insert screenshot]`
+> <img width="860" height="204" alt="3" src="https://github.com/user-attachments/assets/abf0306b-8d21-477d-a63c-392824576746" />
 
 ### Step 4 – Commit
 
@@ -176,13 +177,13 @@ git push -u origin main
 `apt-get install`, and `rm -rf /var/lib/apt/lists/*` in a single line?
 What would happen to the image size if these were three separate `RUN` lines?
 
-> *Your answer:*
+> apt-get update, apt-get install und rm werden zusammen ausgeführt, damit die Paketlisten nicht im Image gespeichert werden. Bei mehreren RUN-Zeilen entstehen zusätzliche Layer und das Image wird größer.
 
 **Question 2.2:** `EXPOSE 80` in a Dockerfile does **not** actually open port
 80. What does it do, and what is required at `docker run` time to actually
 forward a port?
 
-> *Your answer:*
+> EXPOSE 80 dokumentiert nur, dass der Container Port 80 benutzt. Es öffnet den Port nicht. Für eine Weiterleitung muss man beim Start z. B. docker run -p 8080:80 verwenden.
 
 ---
 
