@@ -224,7 +224,7 @@ docker exec -it pg psql -U postgres -c "SELECT * FROM test;"
 
 > **Screenshot 4:** Take a screenshot showing the error message.
 >
-> `[insert screenshot]`
+><img width="770" height="172" alt="4" src="https://github.com/user-attachments/assets/ec72183c-971f-417c-9ed7-47a09befd479" />
 
 ### Questions for Section 3
 
@@ -232,14 +232,13 @@ docker exec -it pg psql -U postgres -c "SELECT * FROM test;"
 `postgres:16` still exists on your machine. Why does recreating a container
 from the same image not restore the data?
 
-> *Your answer:*
+> The image only contains the PostgreSQL software, not the database data. The data was stored inside the deleted container and cannot be restored from the image.
 
 **Question 3.2:** `docker stop` sends SIGTERM and waits for the process to
 exit cleanly. `docker kill` sends SIGKILL immediately. Why is `docker stop`
 preferred for a database container?
 
-> *Your answer:*
-
+> docker stop allows PostgreSQL to shut down cleanly and save data properly. docker kill stops the process immediately and may cause data corruption.
 ---
 
 ## 4 – Named Volumes
@@ -288,7 +287,7 @@ docker volume inspect pg_data
 > **Screenshot 5:** Take a screenshot showing the `SELECT` result after
 > container recreation, and the `docker volume inspect` output.
 >
-> `[insert screenshot]`
+> <img width="786" height="319" alt="5" src="https://github.com/user-attachments/assets/651214e1-ae64-4804-8e8b-c1c375c58ec0" />
 
 ### Step 3 – Clean Up
 
@@ -303,14 +302,15 @@ docker volume rm pg_data
 the host filesystem. Why is it still recommended to use named volumes instead
 of bind-mounting that path directly with `-v /var/lib/docker/volumes/...`?
 
-> *Your answer:*
+> Named volumes are managed by Docker and are more portable, safer, and easier to backup than directly using internal Docker paths.
 
 **Question 4.2:** You want to back up the database. Which `docker` command
 lets you copy files out of a running container, and how would you copy the
 volume contents to a `.tar.gz` archive on the host?
 
-> *Your answer:*
+> The command is docker cp. For a volume backup, you can use a temporary container and create an archive, for example with tar:
 
+docker run --rm -v pg_data:/data -v $(pwd):/backup debian tar czf /backup/pg_data.tar.gz -C /data 
 ---
 
 ## 5 – Two Containers and the Network Problem
@@ -337,7 +337,7 @@ docker run --rm -it postgres:16 \
 
 > **Screenshot 6:** Take a screenshot showing the connection error.
 >
-> `[insert screenshot]`
+><img width="817" height="214" alt="6" src="https://github.com/user-attachments/assets/17b76b50-5383-4a01-928e-b26bb9a2fb07" />
 
 ### Step 2 – Fix It With a Custom Bridge Network
 
@@ -378,13 +378,13 @@ docker volume rm pg_data
 the default bridge. Why can containers on the default bridge **not** resolve
 each other by name, while containers on a user-defined bridge can?
 
-> *Your answer:*
+> The default bridge network does not provide automatic DNS name resolution between containers. User-defined bridge networks have an internal DNS service that allows containers to communicate using their names.
 
 **Question 5.2:** You could find the IP address of the `pg` container with
 `docker inspect` and hard-code it. Why is using the container name as a
 hostname strongly preferable?
 
-> *Your answer:*
+> The container name is better because the IP address can change when the container is recreated. Docker's DNS automatically resolves the name to the current IP address.
 
 ---
 
@@ -501,7 +501,7 @@ curl http://localhost:8000/studenten
 > **Screenshot 7:** Take a screenshot showing `docker compose ps` and the
 > `curl /` response.
 >
-> `[insert screenshot]`
+> <img width="853" height="143" alt="7" src="https://github.com/user-attachments/assets/d955c556-523e-49db-a73f-fb248ab1ceef" />
 
 ### Step 5 – Observe Compose Networking
 
@@ -519,8 +519,14 @@ docker compose down
 docker compose down -v   # also removes the named volume
 ```
 
-> **Question:** What is the difference between `down` and `down -v`?
-> When would you use each?
+> docker compose down stops and removes the containers and networks, but keeps the named volumes and their data.
+
+docker compose down -v also removes the named volumes, so all stored database data is deleted.
+
+Use:
+
+down when you want to stop the application but keep the database data.
+down -v when you want a complete cleanup or a fresh start without old data.
 
 ### Step 7 – Commit
 
@@ -536,13 +542,13 @@ git push -u origin main
 starts before `api`. Does it guarantee that PostgreSQL is **ready to accept
 connections** when the API starts? What is the correct way to handle this?
 
-> *Your answer:*
+> No. depends_on only controls the start order, not whether PostgreSQL is ready. The correct way is to use a health check and wait until the database is accepting connections.
 
 **Question 6.2:** The `api` service uses `volumes: - ./api:/app` (a bind
 mount). What is the advantage of this during development compared to
 `COPY`-ing the code into an image at build time?
 
-> *Your answer:*
+> A bind mount allows code changes on the host to be immediately visible inside the container without rebuilding the image. This makes development faster.
 
 ---
 
@@ -614,7 +620,7 @@ curl http://localhost:8000/studenten
 > **Screenshot 8:** Take a screenshot showing the `curl /studenten` response
 > with all four rows.
 >
-> `[insert screenshot]`
+> <img width="852" height="98" alt="8" src="https://github.com/user-attachments/assets/9459abc4-b2cf-4a30-9c24-bec9c908b8e6" />
 
 ### Step 4 – Commit
 
@@ -630,13 +636,16 @@ git push
 `init.sql`, and run `docker compose up -d` again. The schema change does
 **not** appear in the database. Why not, and how do you force re-initialisation?
 
-> *Your answer:*
+> The init scripts only run when the PostgreSQL data directory is empty. docker compose down keeps the volume, so the database is not reinitialized. To force re-initialisation, remove the volume:
+
+docker compose down -v
+docker compose up -d
 
 **Question 7.2:** `GENERATED ALWAYS AS IDENTITY` is used instead of
 `SERIAL`. What is the practical difference? Which one is the modern
 SQL-standard approach?
 
-> *Your answer:*
+> SERIAL is a PostgreSQL-specific shortcut that creates a sequence automatically. GENERATED ALWAYS AS IDENTITY follows the SQL standard and is the modern recommended approach.
 
 ---
 
@@ -720,7 +729,7 @@ git push
 > **Screenshot 9:** Take a screenshot showing `git status` confirming
 > `.env` is not staged, and the working `curl` response.
 >
-> `[insert screenshot]`
+> <img width="855" height="217" alt="9" src="https://github.com/user-attachments/assets/fdff6090-4795-46f5-a8d6-3390e1ae101a" />
 
 ### Questions for Section 8
 
@@ -729,13 +738,13 @@ git push
 What is the standard practice to document which variables are required
 without committing the actual secrets?
 
-> *Your answer:*
+> The standard practice is to provide a template file like .env.example containing the required variable names but no real passwords or secrets.
 
 **Question 8.2:** Even with `.env` excluded from git, the password is still
 stored in plain text on disk. Name one mechanism Docker provides for
 production-grade secret management that avoids plain-text env files entirely.
 
-> *Your answer:*
+>Docker provides Docker Secrets for production-grade secret management. It stores sensitive data securely instead of using plain-text environment files.
 
 ---
 
@@ -816,7 +825,7 @@ curl http://localhost:8000/studenten
 > **Screenshot 10:** Take a screenshot showing `docker images` with the
 > final image size and the working `curl` response.
 >
-> `[insert screenshot]`
+> <img width="854" height="317" alt="10" src="https://github.com/user-attachments/assets/19adcb7f-9e64-4abc-9e88-30c07c2cf7b0" />
 
 ### Step 5 – Commit
 
@@ -832,13 +841,13 @@ git push
 environment from the builder stage. The final image does not contain `pip` or
 `uv`. What security advantage does this provide?
 
-> *Your answer:*
+> The final image contains only the required runtime files and dependencies. Tools like pip, uv, and build-related packages from the builder stage are removed. This reduces the attack surface and makes the container more secure.
 
 **Question 9.2:** The builder stage installs dependencies from `pyproject.toml`
 before copying the application code. Why does this ordering improve build
 cache efficiency when you frequently change only `main.py`?
 
-> *Your answer:*
+> Docker caches each build step. Since pyproject.toml is copied and dependencies are installed before copying the application code, changes to main.py do not invalidate the dependency installation layer. Docker can reuse the cached dependencies, making rebuilds faster.
 
 ---
 
@@ -896,13 +905,13 @@ git push
 **Question 10.1:** The `USER appuser` instruction is placed after
 `COPY . .`. Why would placing it *before* `COPY` cause a permission problem?
 
-> *Your answer:*
+> Placing USER appuser before COPY . . can cause permission problems because files copied into the image would belong to appuser. If the user does not have the required permissions to write or modify files, the application may fail.
 
 **Question 10.2:** State the **Principle of Least Privilege** in one
 sentence, and name one other place in a typical web application stack
 (outside of containers) where this principle is applied.
 
-> *Your answer:*
+> The Principle of Least Privilege means that every user, process, or service should have only the minimum permissions required to perform its task.
 
 ---
 
@@ -913,20 +922,20 @@ Section 6 of the lecture shows a Dockerfile that runs both PostgreSQL and
 FastAPI in a single container. Describe two concrete operational problems
 this causes in a production environment.
 
-> *Your answer:*
+>Running PostgreSQL and FastAPI in a single container causes operational problems because both services cannot be scaled or updated independently. If one service crashes or needs maintenance, it can affect the other service, reducing reliability and making troubleshooting harder.
 
 **Question B – Volume vs. Bind Mount:**  
 Compare named volumes and bind mounts. When is each type appropriate?
 
-> *Your answer:*
+>Named volumes are managed by Docker and are recommended for persistent application data such as databases because they are portable and handled safely by Docker. Bind mounts directly map a host directory into a container and are mainly useful during development when changing source code frequently.
 
 **Question C – Compose and Reproducibility:**  
 A colleague says: "I can just write the `docker run` commands in a shell
 script — why do I need `docker-compose.yml`?" Give two specific advantages
 of Compose over a shell script of `docker run` commands.
 
-> *Your answer:*
-
+>Docker Compose provides a single declarative configuration file that describes services, networks, volumes, and environment variables, making the setup easier to reproduce on another machine. It also automatically manages dependencies and networking between containers, which is more reliable than manually maintaining multiple docker run commands in a script.
+>
 **Question D – The Complete Chain:**  
 You have now built and containerised the full stack: PostgreSQL in a
 container with a named volume and init script → FastAPI in a slim
@@ -934,7 +943,7 @@ non-root image → both orchestrated by Docker Compose with credentials
 in `.env`. Describe in two sentences what each layer contributes to
 **portability** and **security**.
 
-> *Your answer:*
+> Docker Compose and container images make the application portable by defining the complete environment, services, networks, and dependencies so it can run consistently on different systems. Security is improved through isolated containers, persistent data management with volumes, non-root execution, and separating credentials from code using .env files.
 
 ---
 
